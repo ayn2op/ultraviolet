@@ -96,6 +96,53 @@ func TestConvertLink(t *testing.T) {
 	}
 }
 
+func TestStyleMerge(t *testing.T) {
+	red := color.RGBA{255, 0, 0, 255}
+	blue := color.RGBA{0, 0, 255, 255}
+
+	tests := []struct {
+		name      string
+		base, top *Style
+		want      Style
+	}{
+		{name: "both nil", want: Style{}},
+		{name: "nil top", base: &Style{Fg: red}, want: Style{Fg: red}},
+		{name: "nil base", top: &Style{Fg: red}, want: Style{Fg: red}},
+		{
+			name: "top colors win where set",
+			base: &Style{Fg: red, Bg: red, UnderlineColor: red},
+			top:  &Style{Bg: blue},
+			want: Style{Fg: red, Bg: blue, UnderlineColor: red},
+		},
+		{
+			name: "top underline wins where set",
+			base: &Style{Underline: UnderlineStyleCurly},
+			top:  &Style{Underline: UnderlineStyleSingle},
+			want: Style{Underline: UnderlineStyleSingle},
+		},
+		{
+			name: "base underline is kept",
+			base: &Style{Underline: UnderlineStyleCurly},
+			top:  &Style{},
+			want: Style{Underline: UnderlineStyleCurly},
+		},
+		{
+			name: "attributes of both are kept",
+			base: &Style{Attrs: AttrBold},
+			top:  &Style{Attrs: AttrItalic},
+			want: Style{Attrs: AttrBold | AttrItalic},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := StyleMerge(tt.base, tt.top)
+			if !got.Equal(&tt.want) {
+				t.Errorf("StyleMerge() = %+v, want %+v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestStyleDiff(t *testing.T) {
 	red := color.RGBA{255, 0, 0, 255}
 	blue := color.RGBA{0, 0, 255, 255}

@@ -259,6 +259,38 @@ func (s *Style) Diff(from *Style) string {
 	return StyleDiff(from, s)
 }
 
+// Merge returns the other style layered on top of the style.
+func (s *Style) Merge(o *Style) Style {
+	return StyleMerge(s, o)
+}
+
+// StyleMerge returns the "top" style layered on top of the "base" style. The
+// colors and underline style of "top" win where set, and the attributes of
+// both are kept. A nil style is treated as the zero style.
+func StyleMerge(base, top *Style) Style {
+	var s Style
+	if base != nil {
+		s = *base
+	}
+	if top == nil {
+		return s
+	}
+	if top.Fg != nil {
+		s.Fg = top.Fg
+	}
+	if top.Bg != nil {
+		s.Bg = top.Bg
+	}
+	if top.UnderlineColor != nil {
+		s.UnderlineColor = top.UnderlineColor
+	}
+	if top.Underline != UnderlineStyleNone {
+		s.Underline = top.Underline
+	}
+	s.Attrs |= top.Attrs
+	return s
+}
+
 // StyleDiff returns the SGR ANSI sequence necessary to transition from the
 // "from" style to the "to" style.
 func StyleDiff(from, to *Style) string {
